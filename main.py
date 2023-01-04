@@ -1,5 +1,7 @@
 import requests
+from multiprocessing import Pool
 import re
+import cloudscraper
 import base64
 import lxml
 from bs4 import BeautifulSoup
@@ -11,13 +13,13 @@ cookies = {
     "PHPSESSID" : "", # ur PHPSESSID cookie value
 }
 
-anime = "yi-nian-yong-heng" #  https://jut.su/yi-nian-yong-heng/season-2/episode-27.html
 
 
 
 
 
 
+scraper = cloudscraper.create_scraper(browser={'browser': 'firefox','platform': 'darwin','mobile': True},delay=10)
 
 
 headers = {
@@ -26,7 +28,7 @@ headers = {
 
 
 def get_achievements(url):
-    r = requests.get(url, headers=headers, cookies=cookies)
+    r = scraper.get(url, headers=headers, cookies=cookies)
     some_achiv_str = re.findall(r"eval\( Base64\.decode\( \"(.*)\" \) \);", r.text)
     if len(some_achiv_str) < 2:
         return []
@@ -48,7 +50,7 @@ def send_achievement(_id, _hash):
         "achiv_hash": _hash,
         "the_login_hash": login_hash,
     }
-    r = requests.post(
+    r = scraper.post(
         "https://jut.su/engine/ajax/get_achievement.php", data=payload, headers=headers, cookies=cookies
     )
     print(r.text)
@@ -57,7 +59,7 @@ def send_achievement(_id, _hash):
 
 def get_episodes(category):
     result = []
-    r = requests.get("https://jut.su/{}/".format(category), headers=headers, cookies=cookies)
+    r = scraper.get("https://jut.su/{}/".format(category), headers=headers, cookies=cookies)
     soup = BeautifulSoup(r.text, "lxml")
     for link in soup.find_all(
         "a", attrs={"class": re.compile("short-btn.*video the_hildi.*")}
@@ -66,7 +68,8 @@ def get_episodes(category):
     return result
 
 
-def main():
+def main(anime):
+    print(anime)
     episodes = get_episodes(anime)
     print(episodes)
     for episode in episodes:
@@ -87,4 +90,7 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    with open('animes.txt','r') as f:
+        for line in f:
+            line = line.strip()
+            main(line)
