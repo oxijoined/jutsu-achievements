@@ -17,7 +17,7 @@ cookies = {
 
 
 
-
+proxy = {"http": "http://login:password@ip:port", "https": "http://login:password@ip:port"}
 
 scraper = cloudscraper.create_scraper(browser={'browser': 'firefox','platform': 'darwin','mobile': True},delay=10)
 
@@ -28,7 +28,7 @@ headers = {
 
 
 def get_achievements(url):
-    r = scraper.get(url, headers=headers, cookies=cookies)
+    r = scraper.get(url, headers=headers, cookies=cookies, proxies=proxy)
     some_achiv_str = re.findall(r"eval\( Base64\.decode\( \"(.*)\" \) \);", r.text)
     if len(some_achiv_str) < 2:
         return []
@@ -51,7 +51,7 @@ def send_achievement(_id, _hash):
         "the_login_hash": login_hash,
     }
     r = scraper.post(
-        "https://jut.su/engine/ajax/get_achievement.php", data=payload, headers=headers, cookies=cookies
+        "https://jut.su/engine/ajax/get_achievement.php", data=payload, headers=headers, cookies=cookies, proxies=proxy
     )
     print(r.text)
     return "ok" in r.text
@@ -59,7 +59,7 @@ def send_achievement(_id, _hash):
 
 def get_episodes(category):
     result = []
-    r = scraper.get("https://jut.su/{}/".format(category), headers=headers, cookies=cookies)
+    r = scraper.get("https://jut.su/{}/".format(category), headers=headers, cookies=cookies, proxies=proxy)
     soup = BeautifulSoup(r.text, "lxml")
     for link in soup.find_all(
         "a", attrs={"class": re.compile("short-btn.*video the_hildi.*")}
