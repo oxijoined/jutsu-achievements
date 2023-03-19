@@ -1,39 +1,32 @@
-import requests
-from multiprocessing import Pool
 import re
 import cloudscraper
 import base64
-import lxml
+
 from bs4 import BeautifulSoup
 
-
-login_hash = "" # must be found in chrome request sniffer
+login_hash = ""  # must be found in chrome request sniffer
 
 cookies = {
-    "PHPSESSID" : "", # ur PHPSESSID cookie value
+    "PHPSESSID": "",  # ur PHPSESSID cookie value
 }
-
-
-
-
 
 proxy = {"http": "http://login:password@ip:port", "https": "http://login:password@ip:port"}
 
-scraper = cloudscraper.create_scraper(browser={'browser': 'firefox','platform': 'darwin','mobile': True},delay=10)
-
+scraper = cloudscraper.create_scraper(browser={'browser': 'firefox', 'platform': 'darwin', 'mobile': True}, delay=10)
 
 headers = {
-    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/97.0.4692.99 Safari/537.36 OPR/83.0.4254.66",
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) "
+                  "Chrome/97.0.4692.99 Safari/537.36 OPR/83.0.4254.66",
 }
 
 
 def get_achievements(url):
     r = scraper.get(url, headers=headers, cookies=cookies, proxies=proxy)
-    some_achiv_str = re.findall(r"eval\( Base64\.decode\( \"(.*)\" \) \);", r.text)
-    if len(some_achiv_str) < 2:
+    achievementstring = re.findall(r"eval\( Base64\.decode\( \"(.*)\" \) \);", r.text)
+    if len(achievementstring) < 2:
         return []
-    decoded_achiv_str = base64.b64decode(some_achiv_str[1]).decode("utf-8")
-    enc_achievements = re.findall(r"var some_achiv_str = \"(.*)\";", decoded_achiv_str)
+    achievementstring = base64.b64decode(achievementstring[1]).decode("utf-8")
+    enc_achievements = re.findall(r"var some_achiv_str = \"(.*)\";", achievementstring)
     achievements = base64.b64decode(enc_achievements[0]).decode("utf-8")
     achievements_list = re.findall(r"id: \"(.*)\",\r\nhash: \"(.*)\"", achievements)
 
@@ -62,7 +55,7 @@ def get_episodes(category):
     r = scraper.get("https://jut.su/{}/".format(category), headers=headers, cookies=cookies, proxies=proxy)
     soup = BeautifulSoup(r.text, "lxml")
     for link in soup.find_all(
-        "a", attrs={"class": re.compile("short-btn.*video the_hildi.*")}
+            "a", attrs={"class": re.compile("short-btn.*video the_hildi.*")}
     ):
         result.append("https://jut.su{}".format(link["href"]))
     return result
@@ -90,7 +83,7 @@ def main(anime):
 
 
 if __name__ == "__main__":
-    with open('animes.txt','r') as f:
+    with open('animes.txt', 'r') as f:
         for line in f:
             line = line.strip()
             main(line)
